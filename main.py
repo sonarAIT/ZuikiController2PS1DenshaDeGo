@@ -2,7 +2,6 @@ import time
 import pygame
 import pyautogui
 
-
 class ZuikiControllerInputGetter:
     def __init__(self):
         # const
@@ -134,7 +133,6 @@ class PS1DengoKeyPresser:
             pyautogui.keyDown(key)
         for key in upKeys:
             pyautogui.keyUp(key)
-
 
 def main():
     controllerInputGetter = ZuikiControllerInputGetter()
