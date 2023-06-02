@@ -1,0 +1,2 @@
+# ZuikiController2PS1DenshaDeGo
+Zuiki製のワンハンドルコントローラを使ってエミュレータ上の電車でGO(PS1版)を遊べないか？という試み
