@@ -11,5 +11,7 @@ endif
 run: venv
 	$(RUN)
 
+init: venv
+
 venv:
 	$(INIT)
