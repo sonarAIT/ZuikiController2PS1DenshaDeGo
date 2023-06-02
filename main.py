@@ -1,5 +1,7 @@
+import time
 import pygame
 import pyautogui
+
 
 class ZuikiControllerInputGetter:
     def __init__(self):
@@ -33,7 +35,7 @@ class ZuikiControllerInputGetter:
             if pygame.joystick.Joystick(i).get_name() == self.JOYSTICK_NAME:
                 joystickID = i
                 break
-        
+
         # if joystick is not found
         if joystickID == -1:
             print(f"{self.JOYSTICK_NAME}が接続されていません。")
@@ -42,14 +44,18 @@ class ZuikiControllerInputGetter:
         # get joystick
         self.joystick = pygame.joystick.Joystick(joystickID)
         self.joystick.init()
-    
+
     def getNotch(self):
         pygame.event.pump()
         axis = int(self.joystick.get_axis(1) * 10)
         notch = self.AXIS2NOTCH[axis]
         return notch
 
-class PS1DengoKeyPresser:
+    def getButtons(self):
+        buttons = [self.joystick.get_button(i) for i in range(self.joystick.get_numbuttons())]
+        return buttons
+
+class Zuiki2PS1Dengo:
     def __init__(self):
         self.NOTCH2BITS = {
             "P5": 0b01011011,
@@ -78,24 +84,68 @@ class PS1DengoKeyPresser:
             6: "s",
             7: "a",
         }
+        self.BUTTON2KEY = {
+            0: "l",
+            1: "k",
+            3: "j",
+            4: "b",
+            6: "n",
+        }
 
-    def press(self, notch):
-        pyautogui.keyDown("w") # wは押しっぱなし
+    def getKeys(self, notch, buttons):
         bits = self.NOTCH2BITS[notch]
+        downKeys = ["w"]
+        upKeys = []
         for i in range(8):
             if bits & (1 << i):
-                pyautogui.keyDown(self.BIT2KEY[i])
+                downKeys.append(self.BIT2KEY[i])
             else:
-                pyautogui.keyUp(self.BIT2KEY[i])
+                upKeys.append(self.BIT2KEY[i])
+        for button, key in self.BUTTON2KEY.items():
+            if buttons[button]:
+                downKeys.append(key)
+            else:
+                upKeys.append(key)
+        return downKeys, upKeys
+
+class PS1DengoKeyPresser:
+    def __init__(self):
+        self.WAIT_TIME = 0.05
+        self.prevDownKeys = []
+        self.prevUpKeys = []
+        self.isWaiting = False
+        self.waitStartTime = 0
+        pyautogui.PAUSE = 0
+
+    def input(self, downKeys, upKeys):
+        if self.isWaiting:
+            if self.waitStartTime + self.WAIT_TIME < time.time():
+                self.isWaiting = False
+                self.press(downKeys, upKeys)
+
+        if self.prevDownKeys != downKeys or self.prevUpKeys != upKeys:
+            self.isWaiting = True
+            self.waitStartTime = time.time()
+            self.prevDownKeys = downKeys
+            self.prevUpKeys = upKeys
+
+    def press(self, downKeys, upKeys):
+        for key in downKeys:
+            pyautogui.keyDown(key)
+        for key in upKeys:
+            pyautogui.keyUp(key)
+
 
 def main():
     controllerInputGetter = ZuikiControllerInputGetter()
-    keyPresser = PS1DengoKeyPresser()
-    while True:
-        # print(controllerInputGetter.getNotch())
-        # pygame.time.wait(10)
-        keyPresser.press()
+    zuiki2PS1Dengo = Zuiki2PS1Dengo()
+    ps1DengoKeyPresser = PS1DengoKeyPresser()
 
+    while True:
+        notch = controllerInputGetter.getNotch()
+        buttons = controllerInputGetter.getButtons()
+        downKeys, upKeys = zuiki2PS1Dengo.getKeys(notch, buttons)
+        ps1DengoKeyPresser.input(downKeys, upKeys)
 
 if __name__ == "__main__":
     main()
