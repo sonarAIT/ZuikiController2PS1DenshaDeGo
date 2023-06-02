@@ -109,7 +109,7 @@ class Zuiki2PS1Dengo:
 
 class PS1DengoKeyPresser:
     def __init__(self):
-        self.WAIT_TIME = 0.05
+        self.WAIT_TIME = 0.025
         self.prevDownKeys = []
         self.prevUpKeys = []
         self.isWaiting = False
@@ -121,6 +121,7 @@ class PS1DengoKeyPresser:
             if self.waitStartTime + self.WAIT_TIME < time.time():
                 self.isWaiting = False
                 self.press(downKeys, upKeys)
+            return
 
         if self.prevDownKeys != downKeys or self.prevUpKeys != upKeys:
             self.isWaiting = True
